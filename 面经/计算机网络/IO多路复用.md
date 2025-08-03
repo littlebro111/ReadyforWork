@@ -113,7 +113,7 @@ struct pollfd {
     short events;                   // 需要内核监视的事件
     short revents;                  // 实际发生的事件
 };
- 
+
 // API
 int poll(struct pollfd fds[], nfds_t nfds, int timeout); // 返回值就绪描述符的数目
 ```
@@ -248,24 +248,6 @@ int epoll_wait(int epfd, struct epoll_event *events, int maxevents, int timeout)
 * 参数maxevents：数组元素的个数。
 * 参数timeout：超时时间，单位是毫秒，如果设置为0，epoll_wait会立即返回。
 * 返回值：调用成功会返回有事件的fd数目；如果返回0表示超时；调用失败返回-1。
-
-
-
-```c++
-#include <sys/epoll.h>
- 
-// 数据结构
-// 每一个epoll对象都有一个独立的eventpoll结构体
-// 用于存放通过epoll_ctl方法向epoll对象中添加进来的事件
-// epoll_wait检查是否有事件发生时，只需要检查eventpoll对象中的rdlist双链表中是否有epitem元素即可
-struct eventpoll {
-    /*红黑树的根节点，这颗树中存储着所有添加到epoll中的需要监控的事件*/
-    struct rb_root  rbr;
-    /*双链表中则存放着将要通过epoll_wait返回给用户的满足条件的事件*/
-    struct list_head rdlist;
-};
-
-```
 
 ### epoll实现原理
 
@@ -536,9 +518,12 @@ int main() {
     系统调用的开销是很大的，在有很多短期活跃连接的情况下，由于这些大量的系统调用开销，epoll可能会慢于select和poll。
 
 * select使用线性表描述文件描述符集合，其支持的文件描述符数量太小了，32位机器默认是1024，64位机器默认2048；poll使用链表来描述，没有最大连接数的限制；epoll底层通过红黑树来描述，并且维护一个就绪链表，将事件表中已经就绪的事件添加到这里，在调用epoll_wait时，仅观察这个list中有没有数据即可。
+
 * select和poll的最大开销来自内核判断是否有文件描述符就绪这一过程：每次执行select或poll调用时，它们会采用轮询的方式，遍历整个文件描述符集合去判断各个文件描述符是否有活动；epoll则不需要去以这种方式检查，当有活动产生时，会自动触发epoll回调函数通知epoll文件描述符，然后内核将这些就绪的文件描述符放到就绪链表中等待epoll_wait被调用后处理。
+
 * select和poll都只能工作在相对低效的LT模式下，而epoll同时支持LT和ET模式。
-* 综上，当监测的fd数量较小，且各个fd都很活跃的情况下，建议使用select和poll；当监听的fd数量较多，且单位时间仅部分fd活跃的情况下，使用epoll会明显提升性能。
+
+综上，当监测的fd数量较小，且各个fd都很活跃的情况下，建议使用select和poll；当监听的fd数量较多，且单位时间仅部分fd活跃的情况下，使用epoll会明显提升性能。
 
 # 参考资料
 

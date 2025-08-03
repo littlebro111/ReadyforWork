@@ -89,7 +89,7 @@ void main() {
 
 # extern和const
 
-1. C++中const修饰的全局常量据有跟static相同的特性，即它们只能作用于本编译模块中；
+1. C++中const修饰的全局常量具有跟static相同的特性，即它们只能作用于本编译模块中；
 2. 但是const可以与extern连用来声明该常量可以作用于其他编译模块中, 如`extern const char g_str[];`
 
 所以当const单独使用时其特性就与static相同，而当与extern一起使用的时候，它的特性就跟extern的一样了。

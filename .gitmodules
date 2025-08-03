@@ -1,0 +1,3 @@
+[submodule "gitbook-summary-generator"]
+	path = gitbook-summary-generator
+	url = git@github.com:littlebro111/gitbook-summary-generator.git
